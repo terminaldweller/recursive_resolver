@@ -1,0 +1,24 @@
+https://.:8053 dns://.:8054 {
+  errors
+  log
+  bufsize 4096
+  loadbalance
+
+  hosts /etc/coredns/hosts/hosts {
+    fallthrough
+  }
+
+  forward . 172.31.33.15:53 {
+    max_concurrent 1000
+  }
+
+  cache 3600 {
+    success 10000
+    denial 10000
+    prefetch 20 10m 10%
+    serve_stale 1h
+    servfail 5s
+  }
+
+  loop
+}

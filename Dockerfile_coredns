@@ -1,0 +1,10 @@
+FROM golang:1.25-alpine3.23 AS builder
+RUN apk add --no-cache git make && \
+    git clone https://github.com/coredns/coredns && \
+    cd coredns && \
+    git checkout v1.14.4 && \
+    make
+
+FROM alpine:3.23
+COPY --from=builder /go/coredns/coredns /usr/bin/coredns
+ENTRYPOINT ["/usr/bin/coredns"]

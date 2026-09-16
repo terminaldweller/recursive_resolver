@@ -1,0 +1,11 @@
+FROM  golang:1.25-alpine3.23 AS builder
+RUN apk add --no-cache git && \
+      git clone https://github.com/DNSCrypt/dnscrypt-proxy && \
+      cd dnscrypt-proxy && \
+      git checkout 2.1.16 && \
+      cd dnscrypt-proxy && \
+      go build
+
+FROM alpine:3.23
+COPY --from=builder /go/dnscrypt-proxy/dnscrypt-proxy /usr/bin/
+ENTRYPOINT ["/usr/bin/dnscrypt-proxy"]

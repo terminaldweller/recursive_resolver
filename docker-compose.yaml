@@ -1,0 +1,284 @@
+services:
+  dnsdist:
+    image: powerdns/dnsdist-21:2.1.2
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    volumes:
+      - ./dnsdist.conf:/etc/dnsdist/conf.d/10-encrypted-dns.conf:ro
+      - ./privkey1.pem:/certs/privkey.pem:ro
+      - ./fullchain1.pem:/certs/fullchain.pem:ro
+    ports:
+      - "853:8853/tcp"
+      - "853:8853/udp"
+    networks:
+      dns:
+        ipv4_address: 172.31.33.9
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+    runtime: runsc
+  waf:
+    image: waf
+    build:
+      dockerfile: ./Dockerfile_waf
+      context: .
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    ports:
+      - "443:443/tcp"
+    networks:
+      dns:
+        ipv4_address: 172.31.33.10
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/waf.conf:ro
+    depends_on:
+      - coredns
+    environment:
+      - MODSECURITY_RULE_ENGINE=On
+      - BLOCKING_PARANOIA=1
+      - DETECTION_PARANOIA=1
+      - ALLOWED_REQUEST_CONTENT_TYPE_CHARSET=|utf-8|
+      - VALIDATE_UTF8_ENCODING=1
+      - ALLOWED_METHODS=GET POST
+      - ALLOWED_HTTP_VERSIONS=HTTP/2.0
+    runtime: runsc
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
+  coredns:
+    image: coredns
+    build:
+      dockerfile: ./Dockerfile_coredns
+      context: .
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      dns:
+        ipv4_address: 172.31.33.20
+    volumes:
+      - ./Corefile:/etc/coredns/Corefile:ro
+      - ./hosts/:/etc/coredns/hosts/:ro
+    depends_on:
+      - dnscryptproxy
+      - supercronic
+    command: ["-conf", "/etc/coredns/Corefile"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges
+    runtime: runsc
+    read_only: true
+    cap_drop:
+      - ALL
+  dnscryptproxy:
+    image: dnscrypt-proxy
+    build:
+      dockerfile: ./Dockerfile_dnscrypt-proxy
+      context: .
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      dns:
+        ipv4_address: 172.31.33.15
+      tor:
+        ipv4_address: 172.31.66.15
+    volumes:
+      - ./dnscrypt-proxy-config.toml:/etc/dnscrypt-proxy/dnscrypt-proxy.toml:ro
+      - ./resolv.conf:/etc/resolv.conf:ro
+    depends_on: 
+      - haproxy
+    command: ["--config", "/etc/dnscrypt-proxy/dnscrypt-proxy.toml"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges
+    runtime: runsc
+    cap_drop:
+      - ALL
+  haproxy:
+    image: haproxy:lts-alpine3.24
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges
+    read_only: true
+    runtime: runsc
+    cap_drop:
+      - ALL
+    networks:
+      tor:
+        ipv4_address: 172.31.66.66
+    depends_on:
+      - tor1
+      - tor2
+      - tor3
+  tor1:
+    image: tor
+    build:
+      dockerfile: ./Dockerfile_tor
+      context: .
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      tor:
+        ipv4_address: 172.31.66.10
+    volumes:
+      - ./torrc:/etc/tor/torrc:ro
+      - ./resolv.conf:/etc/resolv.conf:ro
+    command: ["-f", "/etc/tor/torrc"]
+    security_opt:
+      - no-new-privileges
+    restart: unless-stopped
+    runtime: runsc
+    cap_drop:
+      - ALL
+  tor2:
+    image: tor
+    build:
+      dockerfile: ./Dockerfile_tor
+      context: .
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      tor:
+        ipv4_address: 172.31.66.11
+    volumes:
+      - ./torrc:/etc/tor/torrc:ro
+      - ./resolv.conf:/etc/resolv.conf:ro
+    command: ["-f", "/etc/tor/torrc"]
+    security_opt:
+      - no-new-privileges
+    restart: unless-stopped
+    runtime: runsc
+    cap_drop:
+      - ALL
+  tor3:
+    image: tor
+    build:
+      dockerfile: ./Dockerfile_tor
+      context: .
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      tor:
+        ipv4_address: 172.31.66.12
+    volumes:
+      - ./torrc:/etc/tor/torrc:ro
+      - ./resolv.conf:/etc/resolv.conf:ro
+    command: ["-f", "/etc/tor/torrc"]
+    security_opt:
+      - no-new-privileges
+    restart: unless-stopped
+    runtime: runsc
+    cap_drop:
+      - ALL
+  supercronic:
+    image: supercronic
+    build:
+      dockerfile: ./Dockerfile_supercronic
+      context: .
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+    networks:
+      - nil
+    read_only: true
+    security_opt:
+      - no-new-privileges
+    volumes:
+      - ./crontab:/etc/crontab:ro
+      - ./hosts:/hosts/:rw
+      - ./resolv.conf:/etc/resolv.conf:ro
+    restart: unless-stopped
+    command: ["/etc/crontab"]
+    runtime: runsc
+    cap_drop:
+      - ALL
+networks:
+  dns:
+    enable_ipv6: true
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.33.0/24
+  tor:
+    enable_ipv6: true
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.66.0/24
+  nil:
