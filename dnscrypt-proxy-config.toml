@@ -42,7 +42,7 @@ listen_addresses = ['0.0.0.0:53']
 
 ## Maximum number of simultaneous client connections to accept
 
-max_clients = 250
+max_clients = 500
 
 
 ## Switch to a different system user after listening sockets have been created.
@@ -66,7 +66,7 @@ ipv4_servers = true
 ipv6_servers = true
 
 # Use servers implementing the DNSCrypt protocol
-dnscrypt_servers = true
+dnscrypt_servers = false
 
 # Use servers implementing the DNS-over-HTTPS protocol
 doh_servers = true
@@ -346,7 +346,7 @@ cert_refresh_delay = 240
 ## not be sent there. If you're using DNSCrypt or Anonymized DNS and your
 ## lists are up to date, these resolvers will not even be used.
 
-bootstrap_resolvers = ['9.9.9.11:53', '8.8.8.8:53']
+bootstrap_resolvers = ['172.31.66.10:9053', '172.31.66.11:9053', '172.31.66.12:9053']
 
 
 ## When internal DNS resolution is required, for example to retrieve
@@ -371,7 +371,7 @@ ignore_system_dns = true
 ## Use 0 to not test for connectivity at all (not recommended),
 ## and -1 to wait as much as possible.
 
-netprobe_timeout = 60
+netprobe_timeout = 0
 
 ## Address and port to try initializing a connection to, just to check
 ## if the network is up. It can be any address and any port, even if
@@ -766,7 +766,7 @@ urls = [
   'https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md',
   'https://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md',
 ]
-cache_file = 'public-resolvers.md'
+cache_file = '/var/cache/dnscrypt-proxy/public-resolvers.md'
 minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
 refresh_delay = 73
 prefix = ''
@@ -778,25 +778,25 @@ urls = [
   'https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/relays.md',
   'https://download.dnscrypt.info/resolvers-list/v3/relays.md',
 ]
-cache_file = 'relays.md'
+cache_file = '/var/cache/dnscrypt-proxy/relays.md'
 minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
 refresh_delay = 73
 prefix = ''
 
 ### ODoH (Oblivious DoH) servers and relays
 
-# [sources.odoh-servers]
-#   urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-servers.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-servers.md']
-#   cache_file = 'odoh-servers.md'
-#   minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
-#   refresh_delay = 73
-#   prefix = ''
-# [sources.odoh-relays]
-#   urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-relays.md']
-#   cache_file = 'odoh-relays.md'
-#   minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
-#   refresh_delay = 73
-#   prefix = ''
+[sources.odoh-servers]
+  urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-servers.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-servers.md']
+  cache_file = '/var/cache/dnscrypt-proxy/odoh-servers.md'
+  minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+  refresh_delay = 73
+  prefix = ''
+[sources.odoh-relays]
+  urls = ['https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/odoh-relays.md', 'https://download.dnscrypt.info/resolvers-list/v3/odoh-relays.md']
+  cache_file = '/var/cache/dnscrypt-proxy/odoh-relays.md'
+  minisign_key = 'RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3'
+  refresh_delay = 73
+  prefix = ''
 
 ### Quad9
 
