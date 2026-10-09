@@ -279,6 +279,7 @@ services:
 networks:
   frontend:
     driver: bridge
+    enable_ipv6: true
   dns:
     internal: true
     enable_ipv6: true
