@@ -44,6 +44,7 @@ services:
         max-file: "5"
     ports:
       - "443:443/tcp"
+      - "443:443/udp"
     networks:
       frontend:
       dns:
@@ -60,7 +61,7 @@ services:
       - ALLOWED_REQUEST_CONTENT_TYPE_CHARSET=|utf-8|
       - VALIDATE_UTF8_ENCODING=1
       - ALLOWED_METHODS=GET POST
-      - ALLOWED_HTTP_VERSIONS=HTTP/2.0
+      - ALLOWED_HTTP_VERSIONS=HTTP/2.0 HTTP/3.0
     runtime: runsc
     security_opt:
       - no-new-privileges
